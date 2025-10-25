@@ -1,26 +1,25 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Hero from './components/Hero';
-import Controls from './components/Controls';
+import LayoutHeader from './components/LayoutHeader';
+import ControlPanel from './components/ControlPanel';
 import DocumentUploader from './components/DocumentUploader';
-import Chat from './components/Chat';
+import ChatArea from './components/ChatArea';
 
 export default function App() {
+  // Core state
   const [userId, setUserId] = useState('');
   const [mode, setMode] = useState('session'); // session | memory | global
   const [files, setFiles] = useState([]);
   const [messages, setMessages] = useState([
     { role: 'assistant', content: 'Welcome to Vadarth — your ultra-intuitive AI Health Assistant. Set your mode, upload docs, and talk naturally.' },
   ]);
+
+  // Experience toggles
   const [speakReplies, setSpeakReplies] = useState(true);
   const [cinema, setCinema] = useState(true);
 
+  // Speech synthesis for assistant replies
   const synthRef = useRef(typeof window !== 'undefined' ? window.speechSynthesis : null);
-
-  useEffect(() => {
-    return () => {
-      try { synthRef.current?.cancel(); } catch {}
-    };
-  }, []);
+  useEffect(() => () => { try { synthRef.current?.cancel(); } catch {} }, []);
 
   const speak = useCallback((text) => {
     if (!speakReplies || typeof window === 'undefined') return;
@@ -38,6 +37,7 @@ export default function App() {
     } catch {}
   }, [speakReplies]);
 
+  // Simulated assistant streaming reply (replace with API later)
   const handleSendMessage = useCallback(
     async (text) => {
       const trimmed = text.trim();
@@ -45,7 +45,6 @@ export default function App() {
       const userMsg = { role: 'user', content: trimmed };
       setMessages((prev) => [...prev, userMsg]);
 
-      // Simulated latency and streaming reply
       const idNote = userId ? `User:${userId}` : 'Guest';
       const modeLabel = mode === 'session' ? 'Session' : mode === 'memory' ? 'Memory' : 'Global';
       const fileNote = files.length > 0 ? ` | ${files.length} doc${files.length>1?'s':''}` : '';
@@ -55,7 +54,6 @@ export default function App() {
       const assistantSeed = { role: 'assistant', content: '' };
       setMessages((prev) => [...prev, assistantSeed]);
 
-      // Streaming typewriter effect
       let i = 0;
       const chunk = 2;
       const timer = setInterval(() => {
@@ -73,38 +71,44 @@ export default function App() {
           clearInterval(timer);
           speak(target);
         }
-      }, 20);
+      }, 18);
     },
     [files.length, mode, speak, userId]
   );
 
-  const heroProps = useMemo(() => ({ cinema }), [cinema]);
+  const layoutClass = useMemo(() => (
+    cinema
+      ? 'min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white'
+      : 'min-h-screen bg-slate-900 text-white'
+  ), [cinema]);
 
   return (
-    <div className={`min-h-screen ${cinema ? 'bg-slate-950' : 'bg-slate-900'} text-white antialiased`}>
-      <Hero {...heroProps} />
+    <div className={`${layoutClass} antialiased`}> 
+      <LayoutHeader
+        cinema={cinema}
+        onCinemaToggle={setCinema}
+        speakReplies={speakReplies}
+        onSpeakToggle={setSpeakReplies}
+      />
 
-      <main className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <section id="controls" className="-mt-10 sm:-mt-12 relative z-10">
-          <Controls
-            userId={userId}
-            onUserIdChange={setUserId}
-            mode={mode}
-            onModeChange={setMode}
-            speakReplies={speakReplies}
-            onSpeakToggle={setSpeakReplies}
-            cinema={cinema}
-            onCinemaToggle={setCinema}
-          />
-        </section>
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 mt-6">
+          {/* Sidebar */}
+          <aside className="lg:col-span-4 space-y-6 lg:sticky lg:top-6 self-start">
+            <ControlPanel
+              userId={userId}
+              onUserIdChange={setUserId}
+              mode={mode}
+              onModeChange={setMode}
+            />
+            <DocumentUploader files={files} onFilesChange={setFiles} />
+          </aside>
 
-        <section id="uploader" className="mt-6">
-          <DocumentUploader files={files} onFilesChange={setFiles} />
-        </section>
-
-        <section id="chat" className="mt-8 mb-16">
-          <Chat messages={messages} onSend={handleSendMessage} />
-        </section>
+          {/* Main chat area */}
+          <section className="lg:col-span-8">
+            <ChatArea messages={messages} onSend={handleSendMessage} />
+          </section>
+        </div>
       </main>
     </div>
   );

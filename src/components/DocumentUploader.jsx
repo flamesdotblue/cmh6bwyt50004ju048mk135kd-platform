@@ -28,7 +28,7 @@ export default function DocumentUploader({ files, onFilesChange }) {
       name: f.name,
       size: f.size,
       type: f.type,
-      url: f.type.startsWith('image/') ? URL.createObjectURL(f) : null,
+      url: f.type?.startsWith('image/') ? URL.createObjectURL(f) : null,
     }));
   }, [files]);
 
@@ -68,14 +68,14 @@ export default function DocumentUploader({ files, onFilesChange }) {
 
       {files.length > 0 && (
         <div className="mt-4">
-          <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <ul className="grid sm:grid-cols-2 lg:grid-cols-2 gap-3">
             {previews.map((p) => (
               <li key={p.key} className="group flex items-center gap-3 rounded-lg bg-black/20 border border-white/10 px-3 py-2">
                 <div className="relative h-10 w-10 overflow-hidden rounded-md border border-white/10 bg-white/5 flex items-center justify-center">
                   {p.url ? (
                     <img src={p.url} alt={p.name} className="h-full w-full object-cover" />
                   ) : (
-                    <span className="text-white/70">{p.type.includes('image') ? <Image size={16} /> : <File size={16} />}</span>
+                    <span className="text-white/70">{p.type?.includes('image') ? <Image size={16} /> : <File size={16} />}</span>
                   )}
                 </div>
                 <div className="min-w-0">
