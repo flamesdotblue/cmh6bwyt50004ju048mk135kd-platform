@@ -1,28 +1,54 @@
-import { useState } from 'react'
+import React, { useState, useCallback } from 'react';
+import Hero from './components/Hero';
+import Controls from './components/Controls';
+import DocumentUploader from './components/DocumentUploader';
+import Chat from './components/Chat';
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  const [userId, setUserId] = useState('');
+  const [mode, setMode] = useState('session'); // session | memory | global
+  const [files, setFiles] = useState([]);
+  const [messages, setMessages] = useState([
+    { role: 'assistant', content: 'Hello! I am your Vadarth Health Assistant. How can I help you today?' },
+  ]);
+
+  const handleSendMessage = useCallback(
+    (text) => {
+      const trimmed = text.trim();
+      if (!trimmed) return;
+      const nextMessages = [...messages, { role: 'user', content: trimmed }];
+      setMessages(nextMessages);
+
+      // Simulated assistant reply
+      const fileNote = files.length > 0 ? ` I also have ${files.length} document(s) available for context.` : '';
+      const idNote = userId ? ` (User ID: ${userId})` : '';
+      const modeLabel = mode === 'session' ? 'Session' : mode === 'memory' ? 'Memory' : 'Global';
+      const reply = `Under ${modeLabel} mode${idNote}, I received: "${trimmed}".${fileNote}`;
+
+      setTimeout(() => {
+        setMessages((prev) => [...prev, { role: 'assistant', content: reply }]);
+      }, 500);
+    },
+    [messages, files, userId, mode]
+  );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-lg shadow-lg">
-        <h1 className="text-3xl font-bold text-gray-800 mb-4">
-          Vibe Coding Platform
-        </h1>
-        <p className="text-gray-600 mb-6">
-          Your AI-powered development environment
-        </p>
-        <div className="text-center">
-          <button
-            onClick={() => setCount(count + 1)}
-            className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded"
-          >
-            Count is {count}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white">
+      <Hero />
 
-export default App
+      <main className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <section id="controls" className="mt-8">
+          <Controls userId={userId} onUserIdChange={setUserId} mode={mode} onModeChange={setMode} />
+        </section>
+
+        <section id="uploader" className="mt-6">
+          <DocumentUploader files={files} onFilesChange={setFiles} />
+        </section>
+
+        <section id="chat" className="mt-8 mb-16">
+          <Chat messages={messages} onSend={handleSendMessage} />
+        </section>
+      </main>
+    </div>
+  );
+}
